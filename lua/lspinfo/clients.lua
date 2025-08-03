@@ -40,14 +40,14 @@ end
 ---@param client vim.lsp.Client
 ---@return table
 local function get_client_status_display(client, current_buf)
-    local status, status_color = 'status', 'Macro'
+    local status, status_color = '', 'Comment'
     if client:is_stopped() then
-        status, status_color = ' stopped ', 'Error'
+        status, status_color = 'stopped', 'Error'
     elseif client.attached_buffers[current_buf] then
         if client.initialized then
-            status, status_color = '   buf   ', 'Added'
+            status, status_color = 'current', 'Added'
         else
-            status, status_color = '   ...   ', 'WarningMsg'
+            status, status_color = '...', 'Warning'
         end
     end
     return { status, status_color }
@@ -84,7 +84,7 @@ return function(opts)
                         local displayer = entry_display.create {
                             separator = ' ',
                             items = {
-                                { width = 9 },
+                                { width = 11 },
                                 { width = 5 },
                                 { width = 40 },
                                 { width = 20 },
