@@ -11,9 +11,6 @@ local actions = require 'telescope.actions'
 local entry_display = require 'telescope.pickers.entry_display'
 local previewers = require 'telescope.previewers'
 
--- Timer for dynamic updates
-local update_timer = nil
-
 --- Collects all LSP clients
 ---@return vim.lsp.Client[]
 local function get_clients()
@@ -81,131 +78,159 @@ local function get_client_files(entry)
     return files
 end
 
---- Dynamic previewer that updates in real-time
----@param picker table The telescope picker instance
----@param entry {value: vim.lsp.Client} The current entry
-local function create_dynamic_previewer(picker, entry)
-    local config = require('lspinfo.setup').get_config()
-    
-    if not config.enable_dynamic_updates then
-        return
-    end
-    
-    -- Clear existing timer
-    if update_timer then
-        update_timer:stop()
-        update_timer:close()
-    end
-    
-    -- Create timer for dynamic updates
-    update_timer = vim.loop.new_timer()
-    update_timer:start(0, config.update_interval, vim.schedule_wrap(function()
-        if picker and picker.picker and picker.picker:is_done() then
-            update_timer:stop()
-            update_timer:close()
-            return
-        end
-        
-        -- Refresh the picker to show updated information
-        if picker and picker.picker then
-            picker.picker:refresh()
-        end
-    end))
-end
-
 --- LSP Server picker with additional functionality
 ---@param opts?
 return function(opts)
     opts = opts or constants.default_telescope_theme
 
-    local picker_instance = pickers
-        .new(opts, {
-            prompt_title = '',
-            finder = finders.new_dynamic({
-                entry_maker = function(entry)
-                    local status, status_color = get_client_status_display(entry)
-                    local n_buffers = get_client_n_buffers_display(entry)
+    local picker_instance = pickers.new(opts, {
+        prompt_title = '',
+        finder = finders.new_table {
+            results = get_clients(),
+            entry_maker = function(entry)
+                local status, status_color = get_client_status_display(entry)
+                local n_buffers = get_client_n_buffers_display(entry)
 
-                    return {
-                        value = entry,
-                        ordinal = entry.name,
-                        display = function()
-                            local displayer = entry_display.create {
-                                separator = ' ',
-                                items = {
-                                    { width = 7 },
-                                    { width = 5 },
-                                    { width = 40 },
-                                    { width = 20 },
-                                    { remaining = true },
-                                },
-                            }
-                            return displayer {
-                                { status, status_color },
-                                { entry.id or '', 'Constant' },
-                                { entry.name, entry.config and 'Operator' or 'Comment' },
-                                { n_buffers, 'Macro' },
-                            }
-                        end,
-                    }
-                end,
-                fn = get_clients,
-            }),
-            previewer = previewers.new_buffer_previewer {
-                title = 'Client Information',
-                ---@param self
-                ---@param entry {value: vim.lsp.Client}
-                ---@param status
-                define_preview = function(self, entry, status)
-                    -- Set window options
-                    vim.wo[self.state.winid].wrap = true
+                return {
+                    value = entry,
+                    ordinal = entry.name,
+                    display = function()
+                        local displayer = entry_display.create {
+                            separator = ' ',
+                            items = {
+                                { width = 7 },
+                                { width = 5 },
+                                { width = 40 },
+                                { width = 20 },
+                                { remaining = true },
+                            },
+                        }
+                        return displayer {
+                            { status, status_color },
+                            { entry.id or '', 'Constant' },
+                            { entry.name, entry.config and 'Operator' or 'Comment' },
+                            { n_buffers, 'Macro' },
+                        }
+                    end,
+                }
+            end,
+        },
+        previewer = previewers.new_buffer_previewer {
+            title = 'Client Information',
+            ---@param self
+            ---@param entry {value: vim.lsp.Client}
+            ---@param status
+            define_preview = function(self, entry, status)
+                -- Set window options
+                vim.wo[self.state.winid].wrap = true
 
-                    local is_current_buffer = entry.value.attached_buffers[vim.api.nvim_get_current_buf()] ~= nil
+                local is_current_buffer = entry.value.attached_buffers[vim.api.nvim_get_current_buf()] ~= nil
 
-                    local fmt = Format:create()
-                    fmt:add_line { text = entry.value.name, hlgroup = 'Title' }
+                local fmt = Format:create()
+                fmt:add_line { text = entry.value.name, hlgroup = 'Title' }
 
-                    local info = {
+                local config = require('lspinfo.setup').get_config()
+                local info = {}
+
+                -- Add basic client information based on display config
+                if config.display.show_status then
+                    table.insert(info, {
+                        'Status',
                         {
-                            'ID',
-                            {
-                                text = tostring(entry.value.id),
-                                hlgroup = 'String',
-                            },
+                            text = entry.value:is_stopped() and 'Stopped' or 'Running',
+                            hlgroup = entry.value:is_stopped() and 'ErrorMsg' or 'String',
                         },
+                    })
+                end
+
+                table.insert(info, {
+                    'ID',
+                    {
+                        text = tostring(entry.value.id),
+                        hlgroup = 'String',
+                    },
+                })
+
+                if config.display.show_root_dir then
+                    table.insert(info, {
+                        'Root Directory',
                         {
-                            'Root Directory',
-                            {
-                                text = entry.value.root_dir or 'nil',
-                                hlgroup = entry.value.root_dir ~= nil and 'String' or 'Comment',
-                            },
+                            text = entry.value.root_dir or 'nil',
+                            hlgroup = entry.value.root_dir ~= nil and 'String' or 'Comment',
                         },
+                    })
+                end
+
+                table.insert(info, {
+                    'Current Buffer',
+                    {
+                        text = is_current_buffer and 'Yes' or 'No',
+                        hlgroup = 'String',
+                    },
+                })
+
+                if config.display.show_initialized then
+                    table.insert(info, {
+                        'Initialized',
                         {
-                            'Current Buffer',
-                            {
-                                text = is_current_buffer and 'Yes' or 'No',
-                                hlgroup = 'String',
-                            },
+                            text = entry.value.initialized and 'Yes' or 'No',
+                            hlgroup = entry.value.initialized and 'String' or 'WarningMsg',
                         },
-                        {
-                            'Status',
-                            {
-                                text = entry.value:is_stopped() and 'Stopped' or 'Running',
-                                hlgroup = entry.value:is_stopped() and 'ErrorMsg' or 'String',
-                            },
-                        },
-                        {
-                            'Initialized',
-                            {
-                                text = entry.value.initialized and 'Yes' or 'No',
-                                hlgroup = entry.value.initialized and 'String' or 'WarningMsg',
-                            },
-                        },
-                    }
-                    for _, i in pairs(info) do
-                        fmt:tabulate(unpack(i))
+                    })
+                end
+
+                for _, i in pairs(info) do
+                    fmt:tabulate(unpack(i))
+                end
+
+                -- Add fidget.nvim status if enabled
+                if config.fidget.enabled then
+                    local fidget_status = require('lspinfo.setup').get_fidget_status(entry.value.name)
+                    if fidget_status then
+                        fmt:section 'Fidget Status'
+
+                        -- Handle different fidget status structures
+                        if config.fidget.show_progress then
+                            if fidget_status.progress then
+                                for _, progress in pairs(fidget_status.progress) do
+                                    if progress.message then
+                                        fmt:tabulate(
+                                            { width = 15, text = 'Progress' },
+                                            { width = 50, text = progress.message, hlgroup = 'String' }
+                                        )
+                                    end
+                                end
+                            elseif fidget_status.message then
+                                -- Direct message in status
+                                fmt:tabulate(
+                                    { width = 15, text = 'Status' },
+                                    { width = 50, text = fidget_status.message, hlgroup = 'String' }
+                                )
+                            end
+                        end
+
+                        if config.fidget.show_notifications then
+                            if fidget_status.notifications then
+                                for _, notification in pairs(fidget_status.notifications) do
+                                    if notification.message then
+                                        fmt:tabulate(
+                                            { width = 15, text = 'Notification' },
+                                            { width = 50, text = notification.message, hlgroup = 'Comment' }
+                                        )
+                                    end
+                                end
+                            elseif fidget_status.title then
+                                -- Direct notification
+                                fmt:tabulate(
+                                    { width = 15, text = 'Notification' },
+                                    { width = 50, text = fidget_status.title, hlgroup = 'Comment' }
+                                )
+                            end
+                        end
                     end
+                end
 
+                if config.display.show_buffers then
                     fmt:section 'Attached Buffers'
                     local files = get_client_files(entry.value)
                     if vim.tbl_count(files) > 0 then
@@ -213,43 +238,40 @@ return function(opts)
                             local hints = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.HINT })
                             local errors = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.ERROR })
                             local warnings = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.WARN })
-                            fmt:tabulate(
-                                { width = 5, text = tostring(bufnr) },
-                                { width = 40, text = filename, hlgroup = 'Tag' },
-                                { width = 10, text = string.format('%3d  ', hints), hlgroup = 'Character' },
-                                { width = 10, text = string.format('%3d  ', warnings), hlgroup = 'WarningMsg' },
-                                { width = 10, text = string.format('%3d  ', errors), hlgroup = 'ErrorMsg' }
-                            )
+
+                            if config.display.show_diagnostics then
+                                fmt:tabulate(
+                                    { width = 5, text = tostring(bufnr) },
+                                    { width = 40, text = filename, hlgroup = 'Tag' },
+                                    { width = 10, text = string.format('%3d  ', hints), hlgroup = 'Character' },
+                                    { width = 10, text = string.format('%3d  ', warnings), hlgroup = 'WarningMsg' },
+                                    { width = 10, text = string.format('%3d  ', errors), hlgroup = 'ErrorMsg' }
+                                )
+                            else
+                                fmt:tabulate(
+                                    { width = 5, text = tostring(bufnr) },
+                                    { width = 40, text = filename, hlgroup = 'Tag' }
+                                )
+                            end
                         end
                     else
                         fmt:add_line { text = 'No Buffers Attached', hlgroup = 'Comment' }
                     end
+                end
 
-                    fmt:set_lines(self.state.bufnr)
-                    
-                    -- Start dynamic updates
-                    create_dynamic_previewer(picker_instance, entry)
-                end,
-            },
-            sorter = telescope_config.generic_sorter(opts),
-            attach_mappings = function(prompt_bufnr, map)
-                actions.select_default:replace(function()
-                    actions.close(prompt_bufnr)
-                    local selection = action_state.get_selected_entry()
-                    require 'lspinfo.actions'(selection.value)
-                end)
-                return true
+                fmt:set_lines(self.state.bufnr)
             end,
-        })
-    
+        },
+        sorter = telescope_config.generic_sorter(opts),
+        attach_mappings = function(prompt_bufnr, map)
+            actions.select_default:replace(function()
+                actions.close(prompt_bufnr)
+                local selection = action_state.get_selected_entry()
+                require 'lspinfo.actions'(selection.value)
+            end)
+            return true
+        end,
+    })
+
     picker_instance:find()
-    
-    -- Clean up timer when picker is closed
-    picker_instance:register_callback('close', function()
-        if update_timer then
-            update_timer:stop()
-            update_timer:close()
-            update_timer = nil
-        end
-    end)
 end

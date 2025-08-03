@@ -27,6 +27,23 @@ require('lspinfo').setup({
     
     -- Faster update interval (500ms)
     update_interval = 500,
+    
+    -- Enable fidget.nvim integration
+    fidget = {
+        enabled = true,
+        show_progress = true,
+        show_notifications = true,
+        auto_disable = true, -- Auto-disable if fidget API unavailable
+    },
+    
+    -- Customize display options
+    display = {
+        show_diagnostics = true,
+        show_buffers = true,
+        show_status = true,
+        show_initialized = true,
+        show_root_dir = false, -- Hide root directory
+    },
 })
 
 -- Example with keymaps
@@ -56,6 +73,12 @@ vim.keymap.set('n', '<leader>li', '<cmd>LSPInfo<cr>', {
             },
             enable_dynamic_updates = true,
             update_interval = 1000,
+            -- Enable fidget.nvim integration
+            fidget = {
+                enabled = true,
+                show_progress = true,
+                show_notifications = true,
+            },
         })
         
         -- Optional: Add keymap
@@ -65,4 +88,12 @@ vim.keymap.set('n', '<leader>li', '<cmd>LSPInfo<cr>', {
         })
     end,
 }
+--]]
+
+-- Minimal configuration example
+--[[
+require('lspinfo').setup({
+    fidget = { enabled = true },
+    display = { show_diagnostics = false },
+})
 --]] 
