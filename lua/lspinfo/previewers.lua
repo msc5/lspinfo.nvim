@@ -159,29 +159,16 @@ local function dynamic_previewer(render_fn)
             timer:close()
         end
 
-        -- {
-        --     token = 2,
-        --     value = {
-        --         kind = "report",
-        --         message = "148/152",
-        --         percentage = 97
-        --     }
-        -- }
-        -- {
-        --     token = 2,
-        --     value = {
-        --         kind = "end"
-        --     }
-        -- }
-
         timer:start(0, 100, function()
             vim.schedule(function()
-                if is_buffer_valid(self.state.bufnr) then
-                    render_fn(self, entry, status)
-                else
+                if not is_buffer_valid(self.state.bufnr) then
                     timer:stop()
                     timer:close()
+                    return
                 end
+
+                -- Only render if this entry is the current Telescope selection
+                if status.picker:get_selection() == entry then render_fn(self, entry, status) end
             end)
         end)
     end
