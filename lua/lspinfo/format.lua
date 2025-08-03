@@ -1,5 +1,7 @@
 local helpers = require 'lspinfo.helpers'
 
+local ns_id = vim.api.nvim_create_namespace 'lspinfo'
+
 local format = {}
 format.__index = format
 
@@ -118,7 +120,7 @@ function format:set_lines(bufnr)
 
     -- Highlight text
     for _, hl in pairs(self.highlights) do
-        vim.api.nvim_buf_add_highlight(bufnr, -1, hl.hlgroup, hl.line, hl.start, hl.stop)
+        vim.hl.range(bufnr, ns_id, hl.hlgroup, { hl.line, hl.start }, { hl.line, hl.stop })
     end
 end
 

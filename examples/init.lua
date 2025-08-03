@@ -6,7 +6,7 @@
 require('lspinfo').setup()
 
 -- Advanced setup with custom configuration
-require('lspinfo').setup({
+require('lspinfo').setup {
     -- Custom telescope theme
     telescope_theme = {
         layout_strategy = 'horizontal',
@@ -18,24 +18,16 @@ require('lspinfo').setup({
         results_title = 'LSP Clients',
         sorting_strategy = 'descending',
     },
-    
+
     -- Custom command name
     command_name = 'LSPStatus',
-    
+
     -- Disable dynamic updates for better performance
     enable_dynamic_updates = false,
-    
+
     -- Faster update interval (500ms)
     update_interval = 500,
-    
-    -- Enable fidget.nvim integration
-    fidget = {
-        enabled = true,
-        show_progress = true,
-        show_notifications = true,
-        auto_disable = true, -- Auto-disable if fidget API unavailable
-    },
-    
+
     -- Customize display options
     display = {
         show_diagnostics = true,
@@ -44,12 +36,12 @@ require('lspinfo').setup({
         show_initialized = true,
         show_root_dir = false, -- Hide root directory
     },
-})
+}
 
 -- Example with keymaps
-vim.keymap.set('n', '<leader>li', '<cmd>LSPInfo<cr>', { 
+vim.keymap.set('n', '<leader>li', '<cmd>LSPInfo<cr>', {
     desc = 'Show LSP Info',
-    silent = true 
+    silent = true,
 })
 
 -- Example with lazy.nvim configuration
@@ -73,12 +65,6 @@ vim.keymap.set('n', '<leader>li', '<cmd>LSPInfo<cr>', {
             },
             enable_dynamic_updates = true,
             update_interval = 1000,
-            -- Enable fidget.nvim integration
-            fidget = {
-                enabled = true,
-                show_progress = true,
-                show_notifications = true,
-            },
         })
         
         -- Optional: Add keymap
@@ -93,7 +79,6 @@ vim.keymap.set('n', '<leader>li', '<cmd>LSPInfo<cr>', {
 -- Minimal configuration example
 --[[
 require('lspinfo').setup({
-    fidget = { enabled = true },
     display = { show_diagnostics = false },
 })
---]] 
+--]]
