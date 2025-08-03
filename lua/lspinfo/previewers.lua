@@ -114,30 +114,32 @@ local function render_lsp_clients(self, entry, status)
     fmt:section 'LSP Messages'
     local messages = require('lspinfo.lsp').logs[entry.value.id]
 
-    local progress_messages = messages['$/progress']
-    if progress_messages then
-        for token, msg in pairs(progress_messages) do
-            if msg.res.value.message ~= nil then
-                fmt:add_line {
-                    text = ('(%d %s): %s "%s"'):format(
-                        token,
-                        msg.res.value.kind,
-                        msg.res.value.title,
-                        msg.res.value.message
-                    ),
-                }
+    if messages then
+        local progress_messages = messages['$/progress']
+        if progress_messages then
+            for token, msg in pairs(progress_messages) do
+                if msg.res.value.message ~= nil then
+                    fmt:add_line {
+                        text = ('(%d %s): %s "%s"'):format(
+                            token,
+                            msg.res.value.kind,
+                            msg.res.value.title,
+                            msg.res.value.message
+                        ),
+                    }
+                end
+                fmt:add_line { text = ('(%d %s): %s'):format(token, msg.res.value.kind, msg.res.value.title) }
             end
-            fmt:add_line { text = ('(%d %s): %s'):format(token, msg.res.value.kind, msg.res.value.title) }
         end
-    end
 
-    -- TODO: Format these messages correctly
-    -- local log_messages = messages['window/logMessage']
-    -- if log_messages then
-    --     for type, msg in pairs(log_messages) do
-    --         fmt:add_line { text = msg.res.message:sub(1, 80) .. '...' }
-    --     end
-    -- end
+        -- TODO: Format these messages correctly
+        -- local log_messages = messages['window/logMessage']
+        -- if log_messages then
+        --     for type, msg in pairs(log_messages) do
+        --         fmt:add_line { text = msg.res.message:sub(1, 80) .. '...' }
+        --     end
+        -- end
+    end
 
     fmt:set_lines(self.state.bufnr)
 end
