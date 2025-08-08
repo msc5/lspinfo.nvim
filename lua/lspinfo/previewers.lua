@@ -118,17 +118,24 @@ local function render_lsp_clients(self, entry, status)
         local progress_messages = messages['$/progress']
         if progress_messages then
             for token, msg in pairs(progress_messages) do
+                local kind_icon, kind_color = ' ', 'Character'
+                if msg.res.value.kind == 'report' then
+                    kind_icon, kind_color = '󰈙 ', 'Function'
+                elseif msg.res.value.kind == 'end' then
+                    kind_icon, kind_color = ' ', 'Added'
+                end
+
                 if msg.res.value.message ~= nil then
                     fmt:add_line {
-                        text = ('(%d %s): %s "%s"'):format(
-                            token,
-                            msg.res.value.kind,
-                            msg.res.value.title,
-                            msg.res.value.message
-                        ),
+                        text = ('%s %s: "%s"'):format(kind_icon, msg.res.value.title, msg.res.value.message),
+                        hlgroup = kind_color,
+                    }
+                else
+                    fmt:add_line {
+                        text = ('%s %s'):format(kind_icon, msg.res.value.title),
+                        hlgroup = kind_color,
                     }
                 end
-                fmt:add_line { text = ('(%d %s): %s'):format(token, msg.res.value.kind, msg.res.value.title) }
             end
         end
 
