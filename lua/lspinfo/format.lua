@@ -82,24 +82,25 @@ function format:tabulate(...)
     local columns = { ... }
     local parts = {}
 
-    -- local maxWidth = 20
-    -- for _, col in ipairs(columns) do
-    --     if type(col) == 'string' then
-    --         maxWidth = math.max(maxWidth, #col)
-    --     elseif col.width then
-    --         maxWidth = math.max(maxWidth, col.width)
-    --     elseif col.text then
-    --         maxWidth = math.max(maxWidth, #col.text)
-    --     end
-    -- end
-
     for _, col in ipairs(columns) do
-        local part = {}
+        local part
+
         if type(col) == 'string' then
             part = { text = col, width = 40 }
         else
             part = vim.tbl_extend('keep', col, { width = 40 })
         end
+
+        -- Apply truncation if text is too long
+        if #part.text > part.width then
+            if part.width > 3 then
+                part.text = part.text:sub(1, part.width - 3) .. '...'
+            else
+                -- Edge case: width ≤ 3 → just cut without ellipsis
+                part.text = part.text:sub(1, part.width)
+            end
+        end
+
         table.insert(parts, part)
     end
 
