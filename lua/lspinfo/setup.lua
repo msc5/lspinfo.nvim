@@ -19,21 +19,6 @@ local default_config = {
     enable_dynamic_updates = true,
     -- Update interval for dynamic updates (in milliseconds)
     update_interval = 1000,
-    -- Display options
-    display = {
-        -- Whether to show diagnostic counts
-        show_diagnostics = true,
-        -- Whether to show buffer information
-        show_buffers = true,
-        -- Whether to show client capabilities
-        show_capabilities = false,
-        -- Whether to show root directory
-        show_root_dir = true,
-        -- Whether to show client status (running/stopped)
-        show_status = true,
-        -- Whether to show initialization status
-        show_initialized = true,
-    },
     -- Keymaps for the picker
     keymaps = {
         -- Key to restart LSP server

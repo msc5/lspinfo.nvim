@@ -112,15 +112,6 @@ require('lspinfo').setup({
     enable_dynamic_updates = true,
     -- Update interval for dynamic updates (in milliseconds)
     update_interval = 1000,
-    -- Display options
-    display = {
-        show_diagnostics = true,   -- Show diagnostic counts
-        show_buffers = true,       -- Show buffer information
-        show_capabilities = false, -- Show client capabilities
-        show_root_dir = true,      -- Show root directory
-        show_status = true,        -- Show client status
-        show_initialized = true,   -- Show initialization status
-    },
     -- Keymaps for the picker
     keymaps = {
         restart = 'r',             -- Restart LSP server
@@ -140,12 +131,6 @@ require('lspinfo').setup({
 | `command_name` | string | `'LSPInfo'` | Name of the user command |
 | `enable_dynamic_updates` | boolean | `true` | Enable real-time updates in previewer |
 | `update_interval` | number | `1000` | Update interval in milliseconds |
-| `display.show_diagnostics` | boolean | `true` | Show diagnostic counts |
-| `display.show_buffers` | boolean | `true` | Show buffer information |
-| `display.show_capabilities` | boolean | `false` | Show client capabilities |
-| `display.show_root_dir` | boolean | `true` | Show root directory |
-| `display.show_status` | boolean | `true` | Show client status |
-| `display.show_initialized` | boolean | `true` | Show initialization status |
 | `keymaps.restart` | string | `'r'` | Key to restart LSP server |
 | `keymaps.stop` | string | `'s'` | Key to stop LSP server |
 | `keymaps.start` | string | `'t'` | Key to start LSP server |

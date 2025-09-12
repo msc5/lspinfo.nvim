@@ -27,15 +27,6 @@ require('lspinfo').setup {
 
     -- Faster update interval (500ms)
     update_interval = 500,
-
-    -- Customize display options
-    display = {
-        show_diagnostics = true,
-        show_buffers = true,
-        show_status = true,
-        show_initialized = true,
-        show_root_dir = false, -- Hide root directory
-    },
 }
 
 -- Example with keymaps
