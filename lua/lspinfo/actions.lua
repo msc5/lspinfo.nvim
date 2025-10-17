@@ -17,7 +17,7 @@ end
 ---@param client vim.lsp.Client
 local function restart_server(client)
     vim.lsp.stop_client(vim.lsp.get_clients { name = client.name })
-    require('lspconfig')[client.name].launch()
+    vim.lsp.start(client.config)
     notify(client, 'Restarted')
 end
 
@@ -29,7 +29,7 @@ end
 
 ---@param client vim.lsp.Client
 local function start_server(client)
-    require('lspconfig')[client.name].launch()
+    vim.lsp.start(client.config)
     notify(client, 'Started')
 end
 
