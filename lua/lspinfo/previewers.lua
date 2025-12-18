@@ -6,6 +6,10 @@ local setup = require 'lspinfo.setup'
 
 local M = {}
 
+local ICON_CHECK = '󰸞 '
+local ICON_CHECKBOX_EMPTY = '󰄰 '
+local ICON_CHECKBOX_FILLED = '󰄯 '
+
 ---@param entry vim.lsp.Client
 ---@return table<integer, string>
 local function get_client_files(entry)
@@ -79,19 +83,51 @@ local function render_lsp_clients(self, entry, status)
                 hlgroup = entry.value.initialized and 'String' or 'WarningMsg',
             },
         },
+        {
+            'Offset Encoding',
+            {
+                text = entry.value.offset_encoding or 'utf-16',
+                hlgroup = 'Character',
+            },
+        },
+        {
+            'Filetypes',
+            {
+                text = entry.value.config.filetypes and table.concat(entry.value.config.filetypes, ', ') or 'N/A',
+                hlgroup = entry.value.config.filetypes and 'String' or 'Comment',
+            },
+        },
     }
 
     for _, i in pairs(info) do
         fmt:tabulate(unpack(i))
     end
 
+    -- Workspace Folders
+    local workspace_folders = entry.value.workspace_folders
+    if workspace_folders and #workspace_folders > 0 then
+        fmt:section 'Workspace Folders'
+        for _, folder in ipairs(workspace_folders) do
+            local folder_path = folder.name or folder.uri
+            if folder_path then
+                -- Strip file:// prefix if present
+                folder_path = folder_path:gsub('^file://', '')
+                fmt:add_line { text = '  ' .. folder_path, hlgroup = 'Directory' }
+            end
+        end
+    end
+
     fmt:section 'Attached Buffers'
     local files = get_client_files(entry.value)
+    local total_hints, total_warnings, total_errors = 0, 0, 0
     if vim.tbl_count(files) > 0 then
         for bufnr, filename in pairs(files) do
             local hints = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.HINT })
             local errors = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.ERROR })
             local warnings = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.WARN })
+            total_hints = total_hints + hints
+            total_warnings = total_warnings + warnings
+            total_errors = total_errors + errors
 
             fmt:tabulate(
                 { width = 5, text = tostring(bufnr) },
@@ -101,6 +137,14 @@ local function render_lsp_clients(self, entry, status)
                 { width = 10, text = string.format('%3d  ', errors), hlgroup = 'ErrorMsg' }
             )
         end
+        -- Show totals row
+        fmt:tabulate(
+            { width = 5, text = '' },
+            { width = 80, text = 'Total', hlgroup = 'Bold' },
+            { width = 10, text = string.format('%3d  ', total_hints), hlgroup = 'Character' },
+            { width = 10, text = string.format('%3d  ', total_warnings), hlgroup = 'WarningMsg' },
+            { width = 10, text = string.format('%3d  ', total_errors), hlgroup = 'ErrorMsg' }
+        )
     else
         fmt:add_line { text = 'No Buffers Attached', hlgroup = 'Comment' }
     end
@@ -140,6 +184,41 @@ local function render_lsp_clients(self, entry, status)
         --         fmt:add_line { text = msg.res.message:sub(1, 80) .. '...' }
         --     end
         -- end
+    end
+
+    -- Key Capabilities Summary
+    local caps = entry.value.server_capabilities
+    if caps then
+        fmt:section 'Capabilities'
+
+        local capability_checks = {
+            { 'Completion', caps.completionProvider },
+            { 'Hover', caps.hoverProvider },
+            { 'Signature Help', caps.signatureHelpProvider },
+            { 'Go to Definition', caps.definitionProvider },
+            { 'Go to Type Definition', caps.typeDefinitionProvider },
+            { 'Go to Implementation', caps.implementationProvider },
+            { 'Find References', caps.referencesProvider },
+            { 'Document Highlight', caps.documentHighlightProvider },
+            { 'Document Symbol', caps.documentSymbolProvider },
+            { 'Workspace Symbol', caps.workspaceSymbolProvider },
+            { 'Code Action', caps.codeActionProvider },
+            { 'Code Lens', caps.codeLensProvider },
+            { 'Document Formatting', caps.documentFormattingProvider },
+            { 'Document Range Formatting', caps.documentRangeFormattingProvider },
+            { 'Rename', caps.renameProvider },
+            { 'Folding Range', caps.foldingRangeProvider },
+            { 'Semantic Tokens', caps.semanticTokensProvider },
+            { 'Inlay Hints', caps.inlayHintProvider },
+            { 'Call Hierarchy', caps.callHierarchyProvider },
+        }
+
+        for _, cap in ipairs(capability_checks) do
+            local name, supported = cap[1], cap[2]
+            local icon = supported and ICON_CHECKBOX_FILLED or ICON_CHECKBOX_EMPTY
+            local hlgroup = supported and 'Added' or 'Comment'
+            fmt:tabulate({ width = 6, text = icon, hlgroup = hlgroup }, { width = 30, text = name, hlgroup = hlgroup })
+        end
     end
 
     fmt:set_lines(self.state.bufnr)
