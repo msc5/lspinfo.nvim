@@ -34,18 +34,25 @@ function format:add_part(part)
 
     -- Handle when part is a single part
     elseif part.text then
-        local width = part.width or #part.text
+        local text_len = #part.text
+        local width = part.width or text_len
 
         if part.hlgroup then
             table.insert(self.highlights, {
                 hlgroup = part.hlgroup,
                 line = #self.lines - 1,
                 start = #current_line,
-                stop = #current_line + width,
+                stop = #current_line + math.min(width, text_len),
             })
         end
 
-        current_line = current_line .. string.format('%-' .. width .. 's', part.text)
+        -- Only apply padding when width is explicitly specified and reasonable
+        if part.width and part.width <= 99 then
+            current_line = current_line .. string.format('%-' .. width .. 's', part.text)
+        else
+            -- Just append text directly (avoid string.format width limit of 99)
+            current_line = current_line .. part.text
+        end
         self.lines[#self.lines] = current_line
 
     -- Handle when part is a list of parts
@@ -117,7 +124,19 @@ end
 --- Set lines in buffer using vim API
 ---@param bufnr integer
 function format:set_lines(bufnr)
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, self.lines)
+    -- Ensure no lines contain embedded newlines (nvim_buf_set_lines doesn't allow them)
+    local sanitized_lines = {}
+    for _, line in ipairs(self.lines) do
+        if line:find('\n') then
+            -- Split lines containing newlines
+            for _, subline in ipairs(vim.split(line, '\n', { plain = true })) do
+                table.insert(sanitized_lines, subline)
+            end
+        else
+            table.insert(sanitized_lines, line)
+        end
+    end
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, sanitized_lines)
 
     -- Highlight text
     for _, hl in pairs(self.highlights) do

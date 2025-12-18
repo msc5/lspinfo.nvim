@@ -239,11 +239,16 @@ local function dynamic_previewer(render_fn)
             return
         end
 
+        -- Stop any existing timer before creating a new one
+        if self.state.cleanup then
+            self.state.cleanup()
+        end
+
         -- Set up timer for dynamic display
         local timer = vim.uv.new_timer()
         assert(timer ~= nil)
 
-        -- stop timer when Telescope closes
+        -- stop timer when Telescope closes or selection changes
         self.state.cleanup = function()
             timer:stop()
             timer:close()
@@ -257,8 +262,7 @@ local function dynamic_previewer(render_fn)
                     return
                 end
 
-                -- Only render if this entry is the current Telescope selection
-                if status.picker:get_selection() == entry then render_fn(self, entry, status) end
+                render_fn(self, entry, status)
             end)
         end)
     end

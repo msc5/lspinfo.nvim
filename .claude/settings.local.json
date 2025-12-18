@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lua -c:*)",
+      "Bash(luac:*)",
+      "Bash(nvim --headless -c \"lua require(''lspinfo.previewers'')\" -c \"q\")",
+      "Bash(nvim --headless -c \"lua require(''lspinfo.capability_docs'')\" -c \"lua require(''lspinfo.capabilities'')\" -c \"q\")"
+    ]
+  }
+}
