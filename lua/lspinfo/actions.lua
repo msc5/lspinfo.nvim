@@ -1,4 +1,5 @@
 local constants = require 'lspinfo.constants'
+local setup = require 'lspinfo.setup'
 
 local finders = require 'telescope.finders'
 local pickers = require 'telescope.pickers'
@@ -66,11 +67,65 @@ return function(client, opts)
             },
             sorter = config.generic_sorter(opts),
             attach_mappings = function(prompt_bufnr, map)
+                local user_config = setup.get_config()
+                local keymaps = user_config.keymaps or {}
+
                 actions.select_default:replace(function()
                     actions.close(prompt_bufnr)
                     local selection = state.get_selected_entry()
                     selection.value.fn(client)
                 end)
+
+                -- Map configured keys to actions
+                if keymaps.restart then
+                    map('i', keymaps.restart, function()
+                        actions.close(prompt_bufnr)
+                        restart_server(client)
+                    end)
+                    map('n', keymaps.restart, function()
+                        actions.close(prompt_bufnr)
+                        restart_server(client)
+                    end)
+                end
+
+                if keymaps.stop then
+                    map('i', keymaps.stop, function()
+                        actions.close(prompt_bufnr)
+                        stop_server(client)
+                    end)
+                    map('n', keymaps.stop, function()
+                        actions.close(prompt_bufnr)
+                        stop_server(client)
+                    end)
+                end
+
+                if keymaps.start then
+                    map('i', keymaps.start, function()
+                        actions.close(prompt_bufnr)
+                        start_server(client)
+                    end)
+                    map('n', keymaps.start, function()
+                        actions.close(prompt_bufnr)
+                        start_server(client)
+                    end)
+                end
+
+                if keymaps.capabilities then
+                    map('i', keymaps.capabilities, function()
+                        actions.close(prompt_bufnr)
+                        require('lspinfo.capabilities')(client)
+                    end)
+                    map('n', keymaps.capabilities, function()
+                        actions.close(prompt_bufnr)
+                        require('lspinfo.capabilities')(client)
+                    end)
+                end
+
+                if keymaps.close then
+                    map('i', keymaps.close, function() actions.close(prompt_bufnr) end)
+                    map('n', keymaps.close, function() actions.close(prompt_bufnr) end)
+                end
+
                 return true
             end,
         })

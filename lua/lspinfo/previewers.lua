@@ -2,6 +2,7 @@ local Format = require 'lspinfo.format'
 local Job = require 'plenary.job'
 local Path = require 'plenary.path'
 local previewers = require 'telescope.previewers'
+local setup = require 'lspinfo.setup'
 
 local M = {}
 
@@ -149,6 +150,16 @@ local function dynamic_previewer(render_fn)
     ---@param entry {value: vim.lsp.Client}
     ---@param status
     return function(self, entry, status)
+        local user_config = setup.get_config()
+        local enable_dynamic_updates = user_config.enable_dynamic_updates
+        local update_interval = user_config.update_interval or 1000
+
+        -- If dynamic updates are disabled, just render once
+        if not enable_dynamic_updates then
+            render_fn(self, entry, status)
+            return
+        end
+
         -- Set up timer for dynamic display
         local timer = vim.uv.new_timer()
         assert(timer ~= nil)
@@ -159,7 +170,7 @@ local function dynamic_previewer(render_fn)
             timer:close()
         end
 
-        timer:start(0, 100, function()
+        timer:start(0, update_interval, function()
             vim.schedule(function()
                 if not is_buffer_valid(self.state.bufnr) then
                     timer:stop()

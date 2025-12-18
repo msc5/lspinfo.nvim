@@ -27,6 +27,15 @@ require('lspinfo').setup {
 
     -- Faster update interval (500ms)
     update_interval = 500,
+
+    -- Custom keymaps
+    keymaps = {
+        restart = 'r',
+        stop = 's',
+        start = 't',
+        capabilities = 'c',
+        close = '<Esc>',
+    },
 }
 
 -- Example with keymaps
@@ -69,7 +78,5 @@ vim.keymap.set('n', '<leader>li', '<cmd>LSPInfo<cr>', {
 
 -- Minimal configuration example
 --[[
-require('lspinfo').setup({
-    display = { show_diagnostics = false },
-})
+require('lspinfo').setup()
 --]]
