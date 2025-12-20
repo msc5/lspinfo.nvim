@@ -51,7 +51,9 @@ local function render_lsp_clients(self, entry, status)
         {
             'Server Info',
             {
-                text = ('%s (%s)'):format(entry.value.server_info.name, entry.value.server_info.version),
+                text = entry.value.server_info
+                        and ('%s (%s)'):format(entry.value.server_info.name, entry.value.server_info.version)
+                    or '',
                 hlgroup = 'Character',
             },
         },
@@ -240,9 +242,7 @@ local function dynamic_previewer(render_fn)
         end
 
         -- Stop any existing timer before creating a new one
-        if self.state.cleanup then
-            self.state.cleanup()
-        end
+        if self.state.cleanup then self.state.cleanup() end
 
         -- Set up timer for dynamic display
         local timer = vim.uv.new_timer()
