@@ -51,9 +51,10 @@ local function render_lsp_clients(self, entry, status)
         {
             'Server Info',
             {
-                text = entry.value.server_info
-                        and ('%s (%s)'):format(entry.value.server_info.name, entry.value.server_info.version)
-                    or '',
+                text = (entry.value.server_info and ('%s (%s)'):format(
+                    entry.value.server_info.name,
+                    entry.value.server_info.version
+                ) or ''),
                 hlgroup = 'Character',
             },
         },
